@@ -1,0 +1,40 @@
+version: "3"
+services:
+  guacd:
+    image: guacamole/guacd:1.5.5
+    container_name: guacd
+    restart: always
+
+  guacdb:
+    image: postgres:15
+    container_name: guacdb
+    restart: always
+    environment:
+      POSTGRES_DB: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guacamole_pass
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - guac_db_data:/var/lib/postgresql/data
+
+  guac-web:
+    image: guacamole/guacamole:1.5.5
+    container_name: guac-web
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      GUACD_HOSTNAME: guacd
+      POSTGRES_HOSTNAME: guacdb
+      POSTGRES_DATABASE: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guacamole_pass
+      GUACAMOLE_HOME: /etc/guacamole    # <<< Required for branding extension
+    depends_on:
+      - guacd
+      - guacdb
+    volumes:
+      - ./extensions:/etc/guacamole/extensions
+
+volumes:
+  guac_db_data:
