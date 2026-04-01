@@ -1,0 +1,16 @@
+<div class="section-tabs" ng-show="tabs.length">
+    <ul>
+        <li ng-repeat="name in tabs">
+            <a ng-click="selectTab(name)"
+               ng-class="{ current : isSelected(name) }">
+                {{ getSectionHeader(name) | translate }}
+            </a>
+        </li>
+        <li>
+            <a href="/guacamole/dashboard.html" target="_blank"
+               style="background:#3b82f6;color:#fff;border-radius:6px;padding:4px 14px;margin-left:8px;font-weight:600;">
+                ⚡ Dashboard
+            </a>
+        </li>
+    </ul>
+</div>

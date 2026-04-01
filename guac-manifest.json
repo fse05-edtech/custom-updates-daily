@@ -1,0 +1,13 @@
+{
+    "guacamoleVersion" : "1.5.4",
+    "name"             : "OIDC Logout Extension",
+    "namespace"        : "oidc-logout",
+    "authProviders"    : [ "org.apache.guacamole.logout.OidcLogoutAuthenticationProvider" ],
+    "servlets"         : [
+        {
+            "name"    : "OidcLogoutServlet",
+            "class"   : "org.apache.guacamole.logout.OidcLogoutServlet",
+            "patterns": [ "/api/ext/oidc-logout" ]
+        }
+    ]
+}

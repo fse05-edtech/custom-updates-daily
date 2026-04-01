@@ -4,6 +4,8 @@ services:
     image: guacamole/guacd:1.5.5
     container_name: guacd
     restart: always
+    networks:
+      - platform-net
 
   guacdb:
     image: postgres:15
@@ -16,25 +18,35 @@ services:
     volumes:
       - ./init:/docker-entrypoint-initdb.d
       - guac_db_data:/var/lib/postgresql/data
+    networks:
+      - platform-net
 
-  guac-web:
-    image: guacamole/guacamole:1.5.5
-    container_name: guac-web
+  guacamole:
+    image: guacamole-custom:1.5.4
+    container_name: guacamole
     restart: always
     ports:
-      - "8080:8080"
-    environment:
-      GUACD_HOSTNAME: guacd
-      POSTGRES_HOSTNAME: guacdb
-      POSTGRES_DATABASE: guacamole_db
-      POSTGRES_USER: guacamole_user
-      POSTGRES_PASSWORD: guacamole_pass
-      GUACAMOLE_HOME: /etc/guacamole    # <<< Required for branding extension
-    depends_on:
-      - guacd
-      - guacdb
+      - "8081:8080"
     volumes:
       - ./extensions:/etc/guacamole/extensions
+    networks:
+      - platform-net
+
+  dashboard-api:
+    image: python:3.12-slim
+    container_name: dashboard-api
+    restart: always
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./dashboard-api.py:/app/api.py
+    networks:
+      - platform-net
+    command: bash -c "pip install psycopg2-binary -q && python /app/api.py"
 
 volumes:
   guac_db_data:
+
+networks:
+  platform-net:
+    external: true

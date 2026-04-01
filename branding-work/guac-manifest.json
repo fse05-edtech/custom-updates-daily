@@ -1,0 +1,9 @@
+{
+  "guacamoleVersion": "*",
+  "name": "Chipcraft Branding",
+  "namespace": "branding-chipcraft",
+  "css": ["css/theme.css"],
+  "js": ["js/dashboard-v2.js"],
+  "translations": ["translations/en.json"],
+  "resources": { "images/logo.png": "image/png" }
+}

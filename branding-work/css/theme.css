@@ -1,0 +1,26 @@
+.login-ui .logo {
+  background-image: url("app/ext/branding-chipcraft/images/logo.png") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  width: 240px;
+  height: 80px;
+}
+/* Dashboard button injected via branding */
+.section-tabs ul::after {
+    content: "⚡ Dashboard";
+    display: inline-block;
+    margin-left: 12px;
+    padding: 4px 16px;
+    background: #3b82f6;
+    color: #fff !important;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    vertical-align: middle;
+    line-height: 2;
+}
+.section-tabs ul::after:hover {
+    background: #2563eb;
+}
