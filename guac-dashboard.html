@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GuacAdmin — Lab Control Center</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f5f7fa;--bg2:#ffffff;--bg3:#f0f4f8;--bg4:#e2e8f0;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+  --accent:#2563eb;--accent2:#1d4ed8;--accent-dim:#eff6ff;
+  --green:#16a34a;--green-dim:#f0fdf4;
+  --red:#dc2626;--red-dim:#fef2f2;
+  --amber:#d97706;--amber-dim:#fffbeb;
+  --purple:#7c3aed;--purple-dim:#f5f3ff;
+  --cyan:#39d353;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --r:10px;--r2:6px;
+  --shadow:0 8px 32px rgba(0,0,0,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;line-height:1.5;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#f1f5f9;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200;backdrop-filter:blur(8px);}
+.tl{display:flex;align-items:center;gap:14px;}
+.logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:13px;color:#fff;letter-spacing:-1px;}
+.brand{font-weight:600;font-size:15px;letter-spacing:-.3px;}
+.brand span{color:var(--accent);font-family:var(--mono);}
+.tr{display:flex;align-items:center;gap:10px;}
+.pill-status{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);font-size:11px;font-family:var(--mono);color:var(--muted);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);}
+.dot.live{background:var(--green);box-shadow:0 0 6px var(--green);animation:glow 2s infinite;}
+.dot.err{background:var(--red);}
+.dot.spin{background:var(--amber);animation:blink .4s infinite;}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.topbar-btn{background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--r2);padding:5px 12px;font-size:12px;cursor:pointer;font-family:var(--sans);font-weight:500;transition:border-color .15s;}
+.topbar-btn:hover{border-color:var(--accent);}
+#countdown{font-size:11px;color:var(--muted);font-family:var(--mono);}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:calc(100vh - 54px);}
+
+/* ── SIDEBAR ── */
+.sidebar{width:210px;background:var(--bg2);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;}
+.ss{font-size:10px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;padding:0 16px;margin:14px 0 4px;}
+.si{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--muted);cursor:pointer;font-weight:500;transition:color .15s;border-right:2px solid transparent;user-select:none;}
+.si:hover{color:var(--text);}
+.si.active{color:var(--accent);border-right-color:var(--accent);}
+.si .ico{width:18px;text-align:center;font-size:14px;}
+.si .badge-count{margin-left:auto;background:var(--red-dim);color:var(--red);border-radius:20px;padding:1px 7px;font-size:10px;font-family:var(--mono);font-weight:600;display:none;}
+.si .badge-count.show{display:block;}
+.api-cfg{margin:12px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;}
+.api-cfg label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:500;}
+.api-cfg input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:7px 9px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;transition:border-color .15s;}
+.api-cfg input:focus{border-color:var(--accent);}
+.btn-connect{width:100%;margin-top:10px;background:var(--accent2);color:#fff;border:none;border-radius:var(--r2);padding:9px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s;font-family:var(--sans);}
+.btn-connect:hover{opacity:.88;}
+.btn-connect:disabled{opacity:.4;cursor:not-allowed;}
+.err-msg{color:var(--red);font-size:10px;margin-top:6px;font-family:var(--mono);}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:20px;overflow:auto;min-width:0;}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;opacity:.5;}
+.empty-state .ei{font-size:52px;margin-bottom:16px;}
+.empty-state h3{font-size:16px;font-weight:500;margin-bottom:6px;}
+.empty-state p{font-size:12px;color:var(--muted);}
+
+/* ── METRICS GRID ── */
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:border-color .2s;}
+.metric:hover{border-color:var(--border2);}
+.metric-bar{position:absolute;top:0;left:0;right:0;height:2px;}
+.metric-bar.b1{background:linear-gradient(90deg,var(--accent),var(--purple));}
+.metric-bar.b2{background:linear-gradient(90deg,var(--purple),#db2777);}
+.metric-bar.b3{background:linear-gradient(90deg,var(--green),var(--cyan));}
+.metric-bar.b4{background:linear-gradient(90deg,var(--amber),var(--red));}
+.metric-bar.b5{background:linear-gradient(90deg,var(--red),var(--purple));}
+.metric-icon{font-size:18px;margin-bottom:8px;}
+.metric-label{font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.metric-value{font-size:26px;font-weight:700;font-family:var(--mono);color:var(--text);}
+.metric-sub{font-size:11px;color:var(--muted2);margin-top:3px;}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);}
+.card-hl{display:flex;align-items:center;gap:10px;}
+.card-head h3{font-size:13px;font-weight:600;color:var(--text);}
+.card-actions{display:flex;gap:8px;align-items:center;}
+.tag{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--mono);}
+.tag-b{background:var(--accent-dim);color:var(--accent);}
+.tag-g{background:var(--green-dim);color:var(--green);}
+.tag-r{background:var(--red-dim);color:var(--red);}
+.tag-a{background:var(--amber-dim);color:var(--amber);}
+.tag-p{background:var(--purple-dim);color:var(--purple);}
+.ts{font-size:11px;color:var(--muted2);font-family:var(--mono);}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:9px 16px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg3);}
+tbody td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(0,0,0,0.02);}
+.no-data td{text-align:center;padding:30px;color:var(--muted2);font-size:12px;font-family:var(--mono);}
+.av{width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--accent-dim);color:var(--accent);flex-shrink:0;font-family:var(--mono);}
+.av.g{background:var(--green-dim);color:var(--green);}
+.av.p{background:var(--purple-dim);color:var(--purple);}
+.user-cell{display:flex;align-items:center;gap:9px;}
+.uname{font-family:var(--mono);font-size:12px;}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;margin:2px 2px;}
+.badge-blue{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(47,129,247,.3);}
+.badge-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+.badge-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,81,73,.3);}
+.badge-grey{background:var(--bg3);color:var(--muted);border:1px solid var(--border);}
+.badge-amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(210,153,34,.3);}
+.badge-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(163,113,247,.3);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--r2);font-size:11px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;font-family:var(--sans);}
+.btn-manage{background:var(--accent-dim);color:var(--accent);border-color:rgba(47,129,247,.3);}
+.btn-manage:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-profile{background:var(--purple-dim);color:var(--purple);border-color:rgba(163,113,247,.3);}
+.btn-profile:hover{background:var(--purple);color:#fff;border-color:var(--purple);}
+.btn-kill{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.3);}
+.btn-kill:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-primary{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+.btn-primary:hover{opacity:.88;}
+.btn-danger{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.3);border-radius:var(--r2);padding:7px 14px;font-size:12px;}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.btn-success{background:var(--green-dim);color:var(--green);border-color:rgba(63,185,80,.3);border-radius:var(--r2);padding:7px 14px;font-size:12px;}
+.btn-success:hover{background:var(--green);color:#fff;}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--r2);padding:7px 16px;font-size:12px;cursor:pointer;font-family:var(--sans);}
+.btn-secondary:hover{border-color:var(--accent);}
+
+/* ── CHECKBOX + BULK BAR ── */
+input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;}
+.bulk-bar{background:var(--accent-dim);border:1px solid rgba(47,129,247,.3);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between;animation:fadeIn .2s;}
+.bulk-bar.show{display:flex;}
+.bulk-bar-l{font-size:13px;color:var(--accent);font-weight:500;}
+.bulk-bar-r{display:flex;gap:8px;}
+
+/* ── QUICK ASSIGN BAR ── */
+.quick-bar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.quick-bar select{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;}
+.quick-bar select:focus{border-color:var(--accent);}
+
+/* ── TOGGLE ── */
+.toggle{position:relative;width:38px;height:20px;cursor:pointer;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.slider{position:absolute;inset:0;background:var(--bg4);border-radius:20px;transition:.25s;}
+.slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s;}
+.toggle input:checked + .slider{background:var(--green);}
+.toggle input:checked + .slider:before{transform:translateX(18px);}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1000;display:none;align-items:center;justify-content:center;animation:fadeIn .2s;}
+.overlay.show{display:flex;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow);animation:slideUp .2s;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;}
+.modal-head h2{font-size:16px;font-weight:600;}
+.modal-head .sub{font-size:12px;color:var(--muted);margin-top:3px;font-family:var(--mono);}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:18px 22px;}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* ── MANAGE MODAL: lab items ── */
+.lab-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px;transition:border-color .15s;}
+.lab-item:hover{border-color:var(--border2);}
+.lab-item-l{display:flex;align-items:center;gap:10px;}
+.lab-proto{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+
+/* ── USER STATS (in manage modal) ── */
+.user-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.ustat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;text-align:center;}
+.ustat-val{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--text);}
+.ustat-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* ── PROFILE PAGE ── */
+.profile-hero{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:18px;}
+.profile-av{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;font-family:var(--mono);flex-shrink:0;}
+.profile-info h2{font-size:18px;font-weight:600;margin-bottom:4px;}
+.profile-meta{display:flex;gap:12px;flex-wrap:wrap;}
+.profile-meta span{font-size:12px;color:var(--muted);}
+.profile-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px;}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── SESSION TIMER ── */
+.timer{font-family:var(--mono);font-size:11px;color:var(--green);background:var(--green-dim);padding:3px 8px;border-radius:20px;}
+.timer.long{color:var(--amber);}
+.timer.vlong{color:var(--red);}
+
+/* ── ALERTS PAGE ── */
+.alert-item{display:flex;gap:14px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:10px;align-items:flex-start;}
+.alert-item.alert-error{border-left:3px solid var(--red);}
+.alert-item.alert-warning{border-left:3px solid var(--amber);}
+.alert-item.alert-info{border-left:3px solid var(--accent);}
+.alert-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.alert-title{font-weight:600;font-size:13px;margin-bottom:3px;}
+.alert-msg{font-size:12px;color:var(--muted);}
+
+/* ── LAB CARDS ── */
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.lab-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:border-color .2s;}
+.lab-card:hover{border-color:var(--border2);}
+.lab-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.lab-card-name{font-weight:600;font-size:14px;}
+.lab-card-proto{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.lab-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.lcs{background:var(--bg3);border-radius:var(--r2);padding:8px 10px;text-align:center;}
+.lcs-val{font-size:16px;font-weight:700;font-family:var(--mono);}
+.lcs-lbl{font-size:10px;color:var(--muted);margin-top:1px;}
+.capacity-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:10px;}
+.capacity-fill{height:100%;border-radius:3px;transition:width .4s;}
+.capacity-fill.low{background:var(--green);}
+.capacity-fill.mid{background:var(--amber);}
+.capacity-fill.high{background:var(--red);}
+.limit-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.limit-row input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:5px 8px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none;}
+.limit-row input:focus{border-color:var(--accent);}
+
+/* ── ROLE BADGE ── */
+.role-badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono);}
+.role-ADMIN{background:var(--red-dim);color:var(--red);}
+.role-TEAM_LEAD{background:var(--amber-dim);color:var(--amber);}
+.role-USER{background:var(--bg3);color:var(--muted);}
+
+/* ── SEARCH ── */
+.search-box{position:relative;}
+.search-box input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 10px 6px 30px;color:var(--text);font-size:12px;outline:none;width:200px;font-family:var(--sans);}
+.search-box input:focus{border-color:var(--accent);}
+.search-box::before{content:'🔍';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;pointer-events:none;}
+
+/* ── BACK BUTTON ── */
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:16px;padding:4px 0;}
+.back-btn:hover{color:var(--accent);}
+
+/* ── SEPARATOR ── */
+hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* ── NOTIFICATION TOAST ── */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;animation:slideIn .25s,fadeOut .3s 2.7s forwards;min-width:240px;font-size:13px;}
+.toast.t-ok{border-left:3px solid var(--green);}
+.toast.t-err{border-left:3px solid var(--red);}
+.toast.t-warn{border-left:3px solid var(--amber);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{opacity:0;transform:translateX(40px)}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tl">
+    <div class="logo">G/</div>
+    <div><div class="brand">Guac<span>Admin</span></div></div>
+  </div>
+  <div class="tr">
+    <span id="countdown"></span>
+    <div class="pill-status"><span class="dot" id="sdot"></span><span id="stxt" style="font-family:var(--mono);font-size:11px">Not connected</span></div>
+    <button class="topbar-btn" id="rbtn" onclick="fetchAll()" style="display:none">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="ss">Navigation</div>
+  <div class="si active" onclick="nav('dashboard')" id="nav-dashboard"><span class="ico">⚡</span> Dashboard</div>
+  <div class="si" onclick="nav('users')" id="nav-users"><span class="ico">👥</span> Users & Labs</div>
+  <div class="si" onclick="nav('sessions')" id="nav-sessions"><span class="ico">🖥</span> Active Sessions</div>
+  <div class="si" onclick="nav('labs')" id="nav-labs"><span class="ico">🔬</span> Lab Management</div>
+  <div class="si" onclick="nav('history')" id="nav-history"><span class="ico">📋</span> History</div>
+  <div class="si" onclick="nav('alerts')" id="nav-alerts"><span class="ico">🔔</span> Alerts <span class="badge-count" id="alerts-badge">0</span></div>
+
+  <div class="ss">Config</div>
+  <div class="api-cfg">
+    <label>API Host</label>
+    <input type="text" id="api-host" value="http://172.26.197.98:9091"/>
+    <button class="btn-connect" id="fbtn" onclick="fetchAll()">⚡ Connect</button>
+    <div class="err-msg" id="emsg"></div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <!-- ══ DASHBOARD PAGE ══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="empty-state" id="es">
+      <div class="ei">🖥️</div>
+      <h3>No data loaded</h3>
+      <p>Click "Connect" in the sidebar to fetch live data</p>
+    </div>
+    <div id="main-data" style="display:none">
+      <div class="metrics" id="metrics-grid">
+        <div class="metric"><div class="metric-bar b1"></div><div class="metric-icon">👥</div><div class="metric-label">Total Users</div><div class="metric-value" id="m-users">0</div><div class="metric-sub">registered</div></div>
+        <div class="metric"><div class="metric-bar b2"></div><div class="metric-icon">🔬</div><div class="metric-label">Total Labs</div><div class="metric-value" id="m-labs">0</div><div class="metric-sub">connections</div></div>
+        <div class="metric"><div class="metric-bar b3"></div><div class="metric-icon">🟢</div><div class="metric-label">Active Now</div><div class="metric-value" id="m-active">0</div><div class="metric-sub">live sessions</div></div>
+        <div class="metric"><div class="metric-bar b4"></div><div class="metric-icon">📋</div><div class="metric-label">Assignments</div><div class="metric-value" id="m-assign">0</div><div class="metric-sub">user-lab pairs</div></div>
+        <div class="metric"><div class="metric-bar b5"></div><div class="metric-icon">🔔</div><div class="metric-label">Alerts</div><div class="metric-value" id="m-alerts">0</div><div class="metric-sub">issues detected</div></div>
+      </div>
+      <!-- Recent active sessions mini -->
+      <div class="card">
+        <div class="card-head"><div class="card-hl"><h3>Active Sessions</h3><span class="tag tag-g" id="d-acnt">0</span></div><span class="ts" id="d-ats"></span></div>
+        <table><thead><tr><th>User</th><th>Lab</th><th>Remote Host</th><th>Duration</th><th>Action</th></tr></thead><tbody id="d-sessions-body"></tbody></table>
+      </div>
+      <!-- Alert summary -->
+      <div class="card" id="d-alert-card">
+        <div class="card-head"><div class="card-hl"><h3>System Alerts</h3><span class="tag tag-r" id="d-alcnt">0</span></div></div>
+        <div id="d-alerts-body" style="padding:14px 16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ USERS PAGE ══ -->
+  <div class="page" id="page-users">
+    <!-- bulk bar -->
+    <div class="bulk-bar" id="bulk-bar">
+      <span class="bulk-bar-l">☑ <span id="sel-count">0</span> users selected</span>
+      <div class="bulk-bar-r">
+        <select id="bulk-lab-sel" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:5px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;"></select>
+        <button class="btn btn-manage" onclick="bulkAction('assign')">+ Assign Lab</button>
+        <button class="btn btn-kill" onclick="bulkAction('remove')">✕ Remove Lab</button>
+        <button class="btn btn-kill" onclick="bulkRemoveAll()">✕ Remove All Assignments</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-hl"><h3>Users & Lab Assignments</h3><span class="tag tag-b" id="u-cnt">0</span></div>
+        <div class="card-actions">
+          <div class="search-box"><input type="text" id="user-search" placeholder="Search users…" oninput="filterUsers()"/></div>
+          <span class="ts" id="u-ts"></span>
+        </div>
+      </div>
+      <!-- quick assign bar -->
+      <div class="quick-bar">
+        <select id="qa-lab" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;"></select>
+        <button class="btn btn-manage" onclick="bulkAssignAll()">+ Assign to ALL users</button>
+        <button class="btn btn-kill" onclick="bulkRemoveAll()">✕ Remove ALL assignments</button>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-left:auto;cursor:pointer;"><input type="checkbox" id="sel-all" onchange="toggleSelectAll(this)"/> Select All</label>
+      </div>
+      <table>
+        <thead><tr><th style="width:36px"></th><th>#</th><th>User</th><th>Role</th><th>Assigned Labs</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="users-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SESSIONS PAGE ══ -->
+  <div class="page" id="page-sessions">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-hl"><h3>Live Active Sessions</h3><span class="tag tag-g" id="s-cnt">0</span></div>
+        <span class="ts" id="s-ts"></span>
+      </div>
+      <table>
+        <thead><tr><th>User</th><th>Lab</th><th>Remote Host</th><th>Connected Since</th><th>Duration</th><th>Kill Session</th></tr></thead>
+        <tbody id="sessions-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ LABS PAGE ══ -->
+  <div class="page" id="page-labs">
+    <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <h2 style="font-size:16px;font-weight:600;">Lab Management</h2>
+      <span class="ts">Set capacity limits per lab</span>
+    </div>
+    <div class="labs-grid" id="labs-grid"></div>
+  </div>
+
+  <!-- ══ HISTORY PAGE ══ -->
+  <div class="page" id="page-history">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-hl"><h3>Connection History</h3><span class="ts">last 100 sessions</span></div>
+        <div class="card-actions">
+          <div class="search-box"><input type="text" id="hist-search" placeholder="Search…" oninput="filterHistory()"/></div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>User</th><th>Lab</th><th>Remote IP</th><th>Started</th><th>Duration</th><th>Status</th></tr></thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ ALERTS PAGE ══ -->
+  <div class="page" id="page-alerts">
+    <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <h2 style="font-size:16px;font-weight:600;">System Alerts</h2>
+      <button class="topbar-btn" onclick="fetchAll()">↻ Refresh</button>
+    </div>
+    <div id="alerts-list"></div>
+  </div>
+
+  <!-- ══ PROFILE PAGE ══ -->
+  <div class="page" id="page-profile">
+    <div class="back-btn" onclick="nav('users')">← Back to Users</div>
+    <div id="profile-content"></div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /layout -->
+
+<!-- ════ MANAGE MODAL ════ -->
+<div class="overlay" id="modal-manage" onclick="if(event.target===this)closeManage()">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2 id="m-title">Manage User</h2><div class="sub" id="m-sub"></div></div>
+      <button class="modal-close" onclick="closeManage()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="user-stats" id="m-stats"></div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Lab Access</div>
+      <div id="m-labs"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeManage()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ BULK LAB ASSIGN MODAL ════ -->
+<div class="overlay" id="modal-bulk" onclick="if(event.target===this)closeBulkModal()">
+  <div class="modal" style="width:380px">
+    <div class="modal-head">
+      <div><h2 id="bm-title">Bulk Assign</h2><div class="sub" id="bm-sub"></div></div>
+      <button class="modal-close" onclick="closeBulkModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;" id="bm-desc"></div>
+      <select id="bm-lab" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 10px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;"></select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeBulkModal()">Cancel</button>
+      <button class="btn-primary" style="border-radius:var(--r2);padding:8px 18px;font-size:13px;" onclick="confirmBulkAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ══ STATE ══════════════════════════════════════════════════════════════════
+let API = '';
+let allUsers = [], allLabs = [], allActive = [], allHistory = [], allAlerts = [];
+let selectedUsers = new Set();
+let currentBulkAction = '';
+let timerMap = {};   // sessionId -> intervalId
+let cdTimer = null;
+let allHistoryData = [];
+
+const ini = n => (n||'?').replace(/@.*/,'').substring(0,2).toUpperCase();
+const fmt = d => d ? new Date(+d||d).toLocaleString() : '—';
+const fmtShort = d => d ? new Date(+d||d).toLocaleTimeString() : '—';
+
+function dur(startRaw, endRaw) {
+  if (!startRaw) return '—';
+  const start = +startRaw || new Date(startRaw).getTime();
+  const end   = endRaw ? (+endRaw || new Date(endRaw).getTime()) : Date.now();
+  if (!start) return '—';
+  const sec = Math.floor((end - start) / 1000);
+  if (sec < 0) return '—';
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function liveTimer(startRaw, el) {
+  const start = +startRaw || new Date(startRaw).getTime();
+  function update() {
+    const sec = Math.floor((Date.now() - start)/1000);
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    const txt = h>0?`${h}h ${m}m`:`${m}m ${s}s`;
+    const cls = h>=4?'vlong':h>=2?'long':'';
+    el.textContent = txt;
+    el.className = 'timer ' + cls;
+  }
+  update();
+  return setInterval(update, 1000);
+}
+
+// ══ NAVIGATION ════════════════════════════════════════════════════════════
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.si').forEach(s=>s.classList.remove('active'));
+  const pageEl = document.getElementById('page-'+page);
+  const navEl  = document.getElementById('nav-'+page);
+  if (pageEl) pageEl.classList.add('active');
+  if (navEl)  navEl.classList.add('active');
+  // Clear live timers when leaving sessions
+  if (page !== 'sessions') clearLiveTimers();
+  if (page === 'sessions') renderSessions();
+}
+
+function clearLiveTimers() {
+  Object.values(timerMap).forEach(clearInterval);
+  timerMap = {};
+}
+
+// ══ TOAST ═════════════════════════════════════════════════════════════════
+function toast(msg, type='ok') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast t-${type}`;
+  t.innerHTML = `<span>${type==='ok'?'✅':type==='err'?'❌':'⚠️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3100);
+}
+
+// ══ STATUS ═════════════════════════════════════════════════════════════════
+function setStatus(s, msg) {
+  const d = document.getElementById('sdot');
+  d.className = 'dot'+(s==='live'?' live':s==='err'?' err':s==='spin'?' spin':'');
+  document.getElementById('stxt').textContent = msg;
+}
+
+// ══ FETCH ALL ═════════════════════════════════════════════════════════════
+async function fetchAll() {
+  API = document.getElementById('api-host').value.trim().replace(/\/$/,'');
+  setStatus('spin','Loading…');
+  document.getElementById('fbtn').disabled = true;
+  document.getElementById('emsg').textContent = '';
+  stopCountdown();
+  clearLiveTimers();
+  try {
+    const [uR, aR, hR, lR, alR] = await Promise.all([
+      fetch(`${API}/users`), fetch(`${API}/active`),
+      fetch(`${API}/history`), fetch(`${API}/labs`),
+      fetch(`${API}/alerts`)
+    ]);
+    allUsers   = await uR.json();
+    allActive  = await aR.json();
+    allHistory = await hR.json();
+    allHistoryData = allHistory;
+    allLabs    = await lR.json();
+    allAlerts  = await alR.json();
+
+    if (allUsers.error) throw new Error(allUsers.error);
+
+    // Update metrics
+    const totalAssign = allUsers.reduce((t,u)=>t+(u.labs||[]).length,0);
+    document.getElementById('m-users').textContent  = allUsers.length;
+    document.getElementById('m-labs').textContent   = allLabs.length;
+    document.getElementById('m-active').textContent = allActive.length;
+    document.getElementById('m-assign').textContent = totalAssign;
+    document.getElementById('m-alerts').textContent = allAlerts.length;
+
+    // Alert badge
+    const alertBadge = document.getElementById('alerts-badge');
+    const errAlerts = allAlerts.filter(a=>a.type==='error'||a.type==='warning').length;
+    alertBadge.textContent = errAlerts;
+    alertBadge.classList.toggle('show', errAlerts>0);
+
+    document.getElementById('es').style.display = 'none';
+    document.getElementById('main-data').style.display = 'block';
+
+    renderDashboard();
+    renderUsers();
+    renderSessions();
+    renderLabs();
+    renderHistory();
+    renderAlerts();
+    populateLabDropdowns();
+
+    setStatus('live','Live');
+    document.getElementById('rbtn').style.display = 'inline-block';
+    document.getElementById('u-ts').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    document.getElementById('d-ats').textContent = `as of ${new Date().toLocaleTimeString()}`;
+    startCountdown(30);
+  } catch(e) {
+    setStatus('err','Error');
+    document.getElementById('emsg').textContent = '⚠ '+e.message;
+    toast(e.message, 'err');
+  }
+  document.getElementById('fbtn').disabled = false;
+}
+
+// ══ RENDER DASHBOARD ═══════════════════════════════════════════════════════
+function renderDashboard() {
+  document.getElementById('d-acnt').textContent = allActive.length;
+  // Sessions mini table
+  const rows = allActive.slice(0,8).map(s=>{
+    const start = +s.start_date||new Date(s.start_date).getTime();
+    return `<tr>
+      <td><div class="user-cell"><span class="av g">${ini(s.username)}</span><span class="uname">${s.username}</span></div></td>
+      <td><span class="badge badge-green">● ${s.lab}</span></td>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:11px">${s.remote_host||'—'}</td>
+      <td><span class="timer" id="dt-${s.session_id||Math.random()}">${dur(s.start_date)}</span></td>
+      <td><button class="btn btn-kill" onclick="killSession('${s.session_id}','${s.datasource}')">⛔ Kill</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('d-sessions-body').innerHTML =
+    rows || '<tr class="no-data"><td colspan="5">No active sessions</td></tr>';
+
+  // Start timers for dashboard
+  allActive.slice(0,8).forEach(s=>{
+    const id = `dt-${s.session_id||''}`;
+    const el = document.getElementById(id);
+    if (el) liveTimer(s.start_date, el);
+  });
+
+  // Alerts mini
+  document.getElementById('d-alcnt').textContent = allAlerts.length;
+  document.getElementById('d-alerts-body').innerHTML = allAlerts.slice(0,5)
+    .map(a=>`<div class="alert-item alert-${a.type}"><div class="alert-icon">${a.icon}</div><div><div class="alert-title">${a.title}</div><div class="alert-msg">${a.message}</div></div></div>`)
+    .join('') || '<p style="color:var(--muted);font-size:12px;padding:6px 0">No alerts — system healthy ✅</p>';
+}
+
+// ══ RENDER USERS ═══════════════════════════════════════════════════════════
+function renderUsers(filter='') {
+  const amap = {};
+  allActive.forEach(s=>{ amap[s.username] = amap[s.username]||[]; amap[s.username].push(s); });
+  const users = filter
+    ? allUsers.filter(u=>u.username.toLowerCase().includes(filter.toLowerCase()))
+    : allUsers;
+  document.getElementById('u-cnt').textContent = users.length;
+
+  const rows = users.map((u,i)=>{
+    const labs = u.labs||[];
+    const acts = amap[u.username]||[];
+    const labBadges = labs.length
+      ? labs.map(l=>`<span class="badge badge-blue">🖥 ${l}</span>`).join('')
+      : '<span class="badge badge-grey">no labs</span>';
+    const sessBadges = acts.length
+      ? acts.map(s=>`<span class="badge badge-green">● ${s.lab}</span>`).join('')
+      : '<span class="badge badge-grey" style="opacity:.5">offline</span>';
+    const role = u.role||'USER';
+    const checked = selectedUsers.has(u.username) ? 'checked' : '';
+    return `<tr>
+      <td><input type="checkbox" ${checked} onchange="toggleSelect('${u.username}',this)"/></td>
+      <td style="color:var(--muted2);font-family:var(--mono);font-size:10px">${i+1}</td>
+      <td><div class="user-cell"><span class="av">${ini(u.username)}</span><span class="uname">${u.username}</span></div></td>
+      <td><span class="role-badge role-${role}">${role}</span></td>
+      <td>${labBadges}</td>
+      <td>${sessBadges}</td>
+      <td style="display:flex;gap:6px;flex-wrap:nowrap">
+        <button class="btn btn-manage" onclick="openManage('${u.username}')">⚙ Manage</button>
+        <button class="btn btn-profile" onclick="openProfile('${u.username}')">👤 Profile</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('users-body').innerHTML =
+    rows || '<tr class="no-data"><td colspan="7">No users found</td></tr>';
+}
+
+function filterUsers() {
+  renderUsers(document.getElementById('user-search').value);
+}
+
+// ══ SELECT / BULK ══════════════════════════════════════════════════════════
+function toggleSelect(username, cb) {
+  if (cb.checked) selectedUsers.add(username); else selectedUsers.delete(username);
+  updateBulkBar();
+}
+
+function toggleSelectAll(cb) {
+  if (cb.checked) allUsers.forEach(u=>selectedUsers.add(u.username));
+  else selectedUsers.clear();
+  renderUsers(document.getElementById('user-search').value);
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  document.getElementById('sel-count').textContent = selectedUsers.size;
+  bar.classList.toggle('show', selectedUsers.size > 0);
+}
+
+function bulkAction(action) {
+  if (!selectedUsers.size) return;
+  currentBulkAction = action;
+  document.getElementById('bm-title').textContent = action==='assign'?'Bulk Assign Lab':'Bulk Remove Lab';
+  document.getElementById('bm-sub').textContent = `${selectedUsers.size} users selected`;
+  document.getElementById('bm-desc').textContent = action==='assign'
+    ? 'Choose a lab to assign to all selected users:'
+    : 'Choose a lab to remove from all selected users:';
+  const sel = document.getElementById('bm-lab');
+  sel.innerHTML = allLabs.map(l=>`<option value="${l.name}">${l.name} (${l.protocol.toUpperCase()})</option>`).join('');
+  document.getElementById('modal-bulk').classList.add('show');
+}
+
+async function confirmBulkAction() {
+  const lab = document.getElementById('bm-lab').value;
+  const users = [...selectedUsers];
+  closeBulkModal();
+  try {
+    const res = await fetch(`${API}/manage`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action: currentBulkAction==='assign'?'bulk_assign':'bulk_remove', lab, users})
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    toast(`${currentBulkAction==='assign'?'Assigned':'Removed'} "${lab}" for ${users.length} users`, 'ok');
+    fetchAll();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function bulkAssignAll() {
+  const lab = document.getElementById('qa-lab').value;
+  if (!lab) return;
+  if (!confirm(`Assign "${lab}" to ALL users?`)) return;
+  try {
+    const res = await fetch(`${API}/manage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_assign',lab})});
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    toast(`Assigned "${lab}" to all users`,'ok');
+    fetchAll();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function bulkRemoveAll() {
+  if (!confirm('Remove ALL lab assignments from ALL users?')) return;
+  try {
+    const res = await fetch(`${API}/manage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_remove_all'})});
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    toast('All assignments removed','ok');
+    fetchAll();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+function closeBulkModal() { document.getElementById('modal-bulk').classList.remove('show'); }
+
+// ══ MANAGE MODAL ══════════════════════════════════════════════════════════
+async function openManage(username) {
+  const user = allUsers.find(u=>u.username===username)||{};
+  const userLabs = user.labs||[];
+  document.getElementById('m-title').textContent = 'Manage: '+username;
+  document.getElementById('m-sub').textContent = username;
+
+  // Fetch profile for stats
+  let stats = {total_sessions:0,active_sessions:0,last_login:'—'};
+  try {
+    const pr = await fetch(`${API}/profile/${encodeURIComponent(username)}`);
+    const pd = await pr.json();
+    if (pd.stats) stats = pd.stats;
+  } catch(_){}
+
+  document.getElementById('m-stats').innerHTML = `
+    <div class="ustat"><div class="ustat-val">${stats.total_sessions||0}</div><div class="ustat-lbl">Total Sessions</div></div>
+    <div class="ustat"><div class="ustat-val" style="color:var(--green)">${stats.active_sessions||0}</div><div class="ustat-lbl">Active Now</div></div>
+    <div class="ustat"><div class="ustat-val" style="font-size:12px;margin-top:4px">${stats.last_login?new Date(+stats.last_login||stats.last_login).toLocaleDateString():'—'}</div><div class="ustat-lbl">Last Login</div></div>`;
+
+  document.getElementById('m-labs').innerHTML = allLabs.map(lab=>{
+    const assigned = userLabs.includes(lab.name);
+    return `<div class="lab-item">
+      <div class="lab-item-l">
+        <span style="font-size:20px">${lab.protocol==='ssh'?'💻':'🖥️'}</span>
+        <div><div style="font-weight:500;font-size:13px">${lab.name}</div><div class="lab-proto">${(lab.protocol||'').toUpperCase()}</div></div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="lab-cb-${lab.name.replace(/\W/g,'_')}"
+          ${assigned?'checked':''}
+          onchange="toggleLab('${username}','${lab.name}',this.checked)"/>
+        <span class="slider"></span>
+      </label>
+    </div>`;
+  }).join('') || '<p style="color:var(--muted);text-align:center;padding:20px">No labs configured</p>';
+
+  document.getElementById('modal-manage').classList.add('show');
+}
+
+function closeManage() {
+  document.getElementById('modal-manage').classList.remove('show');
+  fetchAll();
+}
+
+async function toggleLab(username, labName, assign) {
+  try {
+    const res = await fetch(`${API}/manage`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username,lab:labName,action:assign?'assign':'remove'})
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    toast(`${assign?'Assigned':'Removed'} ${labName}`, 'ok');
+    // Update local state
+    const u = allUsers.find(u=>u.username===username);
+    if (u) {
+      if (assign && !u.labs.includes(labName)) u.labs.push(labName);
+      if (!assign) u.labs = u.labs.filter(l=>l!==labName);
+    }
+  } catch(e) {
+    toast(e.message,'err');
+    const cb = document.getElementById('lab-cb-'+labName.replace(/\W/g,'_'));
+    if (cb) cb.checked = !assign;
+  }
+}
+
+// ══ SESSIONS ════════════════════════════════════════════════════════════════
+function renderSessions() {
+  clearLiveTimers();
+  document.getElementById('s-cnt').textContent = allActive.length;
+  document.getElementById('s-ts').textContent = `as of ${new Date().toLocaleTimeString()}`;
+  const rows = allActive.map(s=>{
+    const tid = 'timer-'+encodeURIComponent(s.username+s.lab+(s.session_id||''));
+    return `<tr>
+      <td><div class="user-cell"><span class="av g">${ini(s.username)}</span><span class="uname">${s.username}</span></div></td>
+      <td><span class="badge badge-green">● ${s.lab}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${s.remote_host||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmt(s.start_date)}</td>
+      <td><span class="timer" id="${tid}">—</span></td>
+      <td><button class="btn btn-kill" onclick="killSession('${s.session_id}','${s.datasource}')">⛔ Kill</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('sessions-body').innerHTML =
+    rows || '<tr class="no-data"><td colspan="6">No active sessions right now</td></tr>';
+
+  // Start live timers
+  allActive.forEach(s=>{
+    const tid = 'timer-'+encodeURIComponent(s.username+s.lab+(s.session_id||''));
+    const el = document.getElementById(tid);
+    if (el) timerMap[tid] = liveTimer(s.start_date, el);
+  });
+}
+
+async function killSession(sessionId, datasource) {
+  if (!sessionId || sessionId==='undefined') { toast('Session ID not available (DB fallback mode)','warn'); return; }
+  if (!confirm('Terminate this session?')) return;
+  try {
+    const res = await fetch(`${API}/kill`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({session_id:sessionId,datasource:datasource||'postgresql'})
+    });
+    const d = await res.json();
+    if (d.ok) { toast('Session terminated','ok'); fetchAll(); }
+    else toast('Could not kill session','err');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ══ LABS ════════════════════════════════════════════════════════════════════
+function renderLabs() {
+  document.getElementById('labs-grid').innerHTML = allLabs.map(lab=>{
+    const pct = lab.max_users>0 ? Math.min(100,Math.round(lab.active_users/lab.max_users*100)) : 0;
+    const fillClass = pct>=90?'high':pct>=70?'mid':'low';
+    return `<div class="lab-card">
+      <div class="lab-card-head">
+        <div>
+          <div class="lab-card-name">${lab.protocol==='ssh'?'💻':'🖥️'} ${lab.name}</div>
+          <div class="lab-card-proto">${(lab.protocol||'').toUpperCase()}</div>
+        </div>
+        <label class="toggle" title="Enable/Disable lab">
+          <input type="checkbox" ${lab.enabled?'checked':''} onchange="toast('Lab toggle (coming soon)','warn')"/>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="lab-card-stats">
+        <div class="lcs"><div class="lcs-val" style="color:var(--green)">${lab.active_users}</div><div class="lcs-lbl">Active Now</div></div>
+        <div class="lcs"><div class="lcs-val" style="color:var(--accent)">${lab.assigned_users||0}</div><div class="lcs-lbl">Assigned</div></div>
+      </div>
+      ${lab.max_users>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">Capacity: ${lab.active_users}/${lab.max_users} (${pct}%)</div><div class="capacity-bar"><div class="capacity-fill ${fillClass}" style="width:${pct}%"></div></div>`:'<div style="font-size:10px;color:var(--muted2);margin-bottom:12px">No capacity limit set</div>'}
+      <div class="limit-row">
+        <input type="number" min="0" placeholder="Max users (0=unlimited)" id="lim-${lab.name.replace(/\W/g,'_')}" value="${lab.max_users>0?lab.max_users:''}"/>
+        <button class="btn btn-manage" onclick="setLimit('${lab.name}')">Set</button>
+      </div>
+    </div>`;
+  }).join('') || '<p style="color:var(--muted);font-family:var(--mono);font-size:12px">No labs found</p>';
+}
+
+async function setLimit(labName) {
+  const inp = document.getElementById('lim-'+labName.replace(/\W/g,'_'));
+  const max = parseInt(inp.value)||0;
+  try {
+    const res = await fetch(`${API}/limits`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lab:labName,max_users:max})
+    });
+    const d = await res.json();
+    if (d.ok) { toast(`Limit set: ${labName} → ${max||'unlimited'}`,'ok'); fetchAll(); }
+    else toast(d.error,'err');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ══ HISTORY ═════════════════════════════════════════════════════════════════
+function renderHistory(filter='') {
+  const data = filter
+    ? allHistoryData.filter(h=>h.username.toLowerCase().includes(filter)||h.lab.toLowerCase().includes(filter))
+    : allHistoryData;
+  const rows = data.map(h=>`<tr>
+    <td><div class="user-cell"><span class="av">${ini(h.username)}</span><span class="uname">${h.username}</span></div></td>
+    <td><span class="badge badge-blue">${h.lab}</span></td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${h.remote_host||'—'}</td>
+    <td style="font-size:12px;color:var(--muted)">${fmt(h.start_date)}</td>
+    <td style="font-family:var(--mono);font-size:12px">${h.duration_sec?dur(0,h.duration_sec*1000):'—'}</td>
+    <td>${h.status==='active'?'<span class="badge badge-green">● active</span>':'<span class="badge badge-grey">completed</span>'}</td>
+  </tr>`).join('');
+  document.getElementById('history-body').innerHTML =
+    rows || '<tr class="no-data"><td colspan="6">No history found</td></tr>';
+}
+
+function filterHistory() {
+  renderHistory(document.getElementById('hist-search').value.toLowerCase());
+}
+
+// ══ ALERTS ══════════════════════════════════════════════════════════════════
+function renderAlerts() {
+  document.getElementById('alerts-list').innerHTML = allAlerts.length
+    ? allAlerts.map(a=>`<div class="alert-item alert-${a.type}">
+        <div class="alert-icon">${a.icon}</div>
+        <div><div class="alert-title">${a.title}</div><div class="alert-msg">${a.message}</div></div>
+      </div>`).join('')
+    : '<div class="alert-item alert-info"><div class="alert-icon">✅</div><div><div class="alert-title">System Healthy</div><div class="alert-msg">No alerts at this time.</div></div></div>';
+}
+
+// ══ PROFILE PAGE ════════════════════════════════════════════════════════════
+async function openProfile(username) {
+  nav('profile');
+  document.getElementById('profile-content').innerHTML = `<p style="color:var(--muted);font-size:13px">Loading profile…</p>`;
+  try {
+    const res = await fetch(`${API}/profile/${encodeURIComponent(username)}`);
+    const p = await res.json();
+    const s = p.stats||{};
+    const totalTime = s.total_time_sec
+      ? (s.total_time_sec>3600?`${(s.total_time_sec/3600).toFixed(1)}h`:`${Math.round(s.total_time_sec/60)}m`)
+      : '—';
+    document.getElementById('profile-content').innerHTML = `
+      <div class="profile-hero">
+        <div class="profile-av">${ini(username)}</div>
+        <div class="profile-info">
+          <h2>${username}</h2>
+          <div class="profile-meta">
+            <span class="role-badge role-${p.role||'USER'}" style="margin-right:4px">${p.role||'USER'}</span>
+            <span>Last login: ${s.last_login?fmt(s.last_login):'—'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <div>
+          <div class="profile-stats" style="margin-bottom:14px">
+            ${[['Total Sessions',s.total_sessions||0],['Active Now',s.active_sessions||0,true],['Total Time',totalTime],['Assigned Labs',(p.labs||[]).length]].map(([l,v,g])=>`
+              <div class="metric"><div class="metric-bar b1"></div><div class="metric-label">${l}</div><div class="metric-value" style="font-size:20px;${g?'color:var(--green)':''}">${v}</div></div>`).join('')}
+          </div>
+          <!-- History table -->
+          <div class="card">
+            <div class="card-head"><div class="card-hl"><h3>Session History</h3><span class="ts">last 30</span></div></div>
+            <table><thead><tr><th>Lab</th><th>Remote IP</th><th>Started</th><th>Duration</th><th>Status</th></tr></thead>
+            <tbody>${(p.history||[]).map(h=>`<tr>
+              <td><span class="badge badge-blue">${h.lab}</span></td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${h.remote_host||'—'}</td>
+              <td style="font-size:12px;color:var(--muted)">${fmt(h.start_date)}</td>
+              <td style="font-family:var(--mono);font-size:12px">${h.duration_sec?dur(0,h.duration_sec*1000):'—'}</td>
+              <td>${h.status==='active'?'<span class="badge badge-green">● active</span>':'<span class="badge badge-grey">done</span>'}</td>
+            </tr>`).join('')||'<tr class="no-data"><td colspan="5">No history</td></tr>'}
+            </tbody></table>
+          </div>
+        </div>
+        <div>
+          <!-- Assigned labs -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-head"><div class="card-hl"><h3>Assigned Labs</h3><span class="tag tag-b">${(p.labs||[]).length}</span></div></div>
+            <div style="padding:12px 16px">${(p.labs||[]).map(l=>`<div class="lab-item"><div class="lab-item-l"><span>${l.protocol==='ssh'?'💻':'🖥️'}</span><div><div style="font-weight:500;font-size:13px">${l.name}</div><div class="lab-proto">${(l.protocol||'').toUpperCase()}</div></div></div></div>`).join('')||'<p style="color:var(--muted);font-size:12px">No labs assigned</p>'}</div>
+          </div>
+          <!-- Top labs -->
+          <div class="card">
+            <div class="card-head"><div class="card-hl"><h3>Most Used Labs</h3></div></div>
+            <div style="padding:12px 16px">${(p.top_labs||[]).map((l,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${l.lab}</span><span class="tag tag-b">${l.count} sessions</span></div>`).join('')||'<p style="color:var(--muted);font-size:12px">No data</p>'}</div>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('profile-content').innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`;
+  }
+}
+
+// ══ POPULATE LAB DROPDOWNS ═════════════════════════════════════════════════
+function populateLabDropdowns() {
+  const opts = allLabs.map(l=>`<option value="${l.name}">${l.name}</option>`).join('');
+  ['qa-lab','bulk-lab-sel','bm-lab'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+// ══ COUNTDOWN ═════════════════════════════════════════════════════════════
+function startCountdown(sec) {
+  let c = sec;
+  const el = document.getElementById('countdown');
+  cdTimer = setInterval(()=>{
+    c--;
+    el.textContent = `refresh in ${c}s`;
+    if (c<=0) { stopCountdown(); fetchAll(); }
+  },1000);
+}
+function stopCountdown() {
+  if (cdTimer) clearInterval(cdTimer);
+  document.getElementById('countdown').textContent = '';
+}
+</script>
+</body>
+</html>
